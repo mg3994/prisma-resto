@@ -1,7 +1,7 @@
 datasource db {
   provider   = "postgresql"
   url        = env("DATABASE_URL")
-
+  extensions = [postgis]
 }
 
 generator client {
@@ -311,7 +311,7 @@ model Payment {
   order           Order         @relation(fields: [orderId], references: [id])
   orderId         String        @unique @map("order_id")
   amount          Decimal       @db.Decimal(10, 2)
-  paymentMethod   String        @map("payment_method")
+  paymentMethod   String        @default("UPI") @map("payment_method")
   status          PaymentStatus @default(pending)
   gateway         String?
   transactionId   String?       @map("transaction_id")
@@ -385,6 +385,7 @@ model PromoCodeApplicableRestaurant {
   promoCodeId  String     @map("promo_code_id")
   restaurant   Restaurant @relation(fields: [restaurantId], references: [id])
   restaurantId String     @map("restaurant_id")
+  deletedAt    DateTime?  @map("deleted_at")
 
   @@id([promoCodeId, restaurantId])
   @@index([promoCodeId])
@@ -397,6 +398,7 @@ model PromoCodeApplicableCuisine {
   promoCodeId String    @map("promo_code_id")
   cuisine     Cuisine   @relation(fields: [cuisineId], references: [id])
   cuisineId   String    @map("cuisine_id")
+  deletedAt   DateTime? @map("deleted_at")
 
   @@id([promoCodeId, cuisineId])
   @@index([promoCodeId])
@@ -409,6 +411,7 @@ model PromoCodeApplicableUser {
   promoCodeId String    @map("promo_code_id")
   user        User      @relation(fields: [userId], references: [id])
   userId      String    @map("user_id")
+  deletedAt   DateTime? @map("deleted_at")
 
   @@id([promoCodeId, userId])
   @@index([promoCodeId])
@@ -436,13 +439,14 @@ model Cancellation {
 }
 
 model WebhookLog {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   gateway     String
   payload     Json
-  receivedAt  DateTime @default(now()) @map("received_at")
-  isProcessed Boolean  @default(false) @map("is_processed")
-  payment     Payment? @relation(fields: [paymentId], references: [id])
-  paymentId   String?  @map("payment_id")
+  receivedAt  DateTime  @default(now()) @map("received_at")
+  isProcessed Boolean   @default(false) @map("is_processed")
+  processedAt DateTime? @map("processed_at")
+  payment     Payment?  @relation(fields: [paymentId], references: [id])
+  paymentId   String?   @map("payment_id")
 
   @@index([paymentId])
   @@map("webhook_logs")
