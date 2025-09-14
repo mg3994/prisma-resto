@@ -30,9 +30,7 @@ model User {
   phone                 String                      @unique
   status                UserStatus                  @default(active)
   username              Username?
-  addresses             UserAddress[]               @relation("UserAddresses")
-  defaultAddress        UserAddress?                @relation("DefaultAddress", fields: [defaultAddressId], references: [id])
-  defaultAddressId      String?
+  addresses             UserAddress[]
   sessions              Session[]
   ownedRestaurants      Restaurant[]                @relation("RestaurantOwner")
   orders                Order[]
@@ -59,18 +57,19 @@ model Username {
 
 model UserAddress {
   id           String       @id @default(cuid())
-  user         User         @relation("UserAddresses", fields: [userId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
   userId       String       @map("user_id")
   label        AddressLabel @relation(fields: [labelId], references: [id])
   labelId      String       @map("label_id")
   location     Unsupported("geography(Point, 4326)")
   fullAddress  String
   phone        String
-  isDefaultFor User?        @relation("DefaultAddress")
+  isDefault    Boolean      @default(false)
   sessions     Session[]
   createdAt    DateTime     @default(now()) @map("created_at")
   updatedAt    DateTime     @updatedAt @map("updated_at")
 
+  // Note: The application layer must ensure that only one address per user has isDefault set to true.
   @@index([userId])
   @@index([labelId])
   @@map("user_addresses")
